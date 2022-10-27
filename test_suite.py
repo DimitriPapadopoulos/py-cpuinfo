@@ -25,12 +25,12 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-import os, sys
+import os
+import sys
 import unittest
 
 # Add the path of all the tests to this path
 sys.path.append(os.path.realpath('tests'))
-
 
 
 # Import all the test files

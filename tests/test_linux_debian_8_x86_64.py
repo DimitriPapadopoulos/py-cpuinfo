@@ -1,5 +1,3 @@
-
-
 import unittest
 from cpuinfo import *
 import helpers
@@ -47,10 +45,8 @@ cache_alignment	: 64
 address sizes	: 36 bits physical, 48 bits virtual
 power management:
 
-
 '''
 		return returncode, output
-
 
 
 class TestLinuxDebian_8_X86_64(unittest.TestCase):

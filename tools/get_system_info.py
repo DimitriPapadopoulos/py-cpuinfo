@@ -25,7 +25,8 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-import os, sys
+import os
+import sys
 import glob
 import platform
 import multiprocessing
@@ -33,10 +34,10 @@ import subprocess
 
 try:
 	import _winreg as winreg
-except ImportError as err:
+except ImportError:
 	try:
 		import winreg
-	except ImportError as err:
+	except ImportError:
 		pass
 
 is_windows = platform.system().lower() == 'windows'
@@ -61,6 +62,7 @@ def run_and_get_stdout(command, pipe_command=None):
 		output = output.decode(encoding='UTF-8')
 		return p2.returncode, output
 
+
 def program_paths(program_name):
 	paths = []
 	exts = filter(None, os.environ.get('PATHEXT', '').split(os.pathsep))
@@ -74,11 +76,14 @@ def program_paths(program_name):
 				paths.append(pext)
 	return paths
 
+
 def has_sestatus():
 	return len(program_paths('sestatus')) > 0
 
+
 def sestatus_b():
 	return run_and_get_stdout(['sestatus', '-b'])
+
 
 def _is_selinux_enforcing():
 	# Just return if the SE Linux Status Tool is not installed
@@ -110,6 +115,7 @@ def _is_selinux_enforcing():
 			can_selinux_exec_memory = True
 
 	return (not can_selinux_exec_heap or not can_selinux_exec_memory)
+
 
 def parse_arch(arch_string_raw):
 	import re
@@ -162,9 +168,11 @@ def parse_arch(arch_string_raw):
 
 	return (arch, bits)
 
+
 def print_output(name, output):
 	line = "=" * 79
 	out_file.write('{0}:\n{1}\n{2}\n\n\n\n'.format(name, line, output))
+
 
 print_output('sys.executable', sys.executable)
 
@@ -239,13 +247,13 @@ if program_paths('dmesg'):
 	if returncode != 0:
 		returncode, output = run_and_get_stdout(['dmesg'])
 	if len(output) > 20480:
-		output = output[0 : 20480]
+		output = output[0:20480]
 	print_output('dmesg -a', output)
 
 if os.path.exists('/var/run/dmesg.boot'):
 	returncode, output = run_and_get_stdout(['cat', '/var/run/dmesg.boot'])
 	if len(output) > 20480:
-		output = output[0 : 20480]
+		output = output[0:20480]
 	print_output('cat /var/run/dmesg.boot', output)
 
 if program_paths('sysinfo'):
@@ -317,7 +325,8 @@ class ASM:
 			# Allocate a memory segment the size of the machine code, and make it executable
 			size = len(machine_code)
 			# Alloc at least 1 page to ensure we own all pages that we want to change protection on
-			if size < 0x1000: size = 0x1000
+			if size < 0x1000:
+				size = 0x1000
 			MEM_COMMIT = ctypes.c_ulong(0x1000)
 			PAGE_READWRITE = ctypes.c_ulong(0x4)
 			pfnVirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -387,6 +396,7 @@ class ASM:
 		self.address = None
 		self.size = 0
 
+
 class CPUID:
 	def __init__(self):
 		# Figure out if SE Linux is on and in enforcing mode
@@ -446,9 +456,9 @@ class CPUID:
 	def get_info(self):
 		# EAX
 		eax = self._run_asm(
-			b"\xB8\x01\x00\x00\x00",   # mov eax,0x1"
-			b"\x0f\xa2"                # cpuid
-			b"\xC3"                    # ret
+			b"\xB8\x01\x00\x00\x00",  # mov eax,0x1"
+			b"\x0f\xa2"               # cpuid
+			b"\xC3"                   # ret
 		)
 		#print('!!! eax: ', hex(eax))
 		return eax
@@ -457,9 +467,9 @@ class CPUID:
 	def get_max_extension_support(self):
 		# Check for extension support
 		max_extension_support = self._run_asm(
-			b"\xB8\x00\x00\x00\x80" # mov ax,0x80000000
-			b"\x0f\xa2"             # cpuid
-			b"\xC3"                 # ret
+			b"\xB8\x00\x00\x00\x80"  # mov ax,0x80000000
+			b"\x0f\xa2"              # cpuid
+			b"\xC3"                  # ret
 		)
 
 		return max_extension_support
@@ -470,20 +480,20 @@ class CPUID:
 
 		# EDX
 		edx = self._run_asm(
-			b"\xB8\x01\x00\x00\x00",   # mov eax,0x1"
-			b"\x0f\xa2"                # cpuid
-			b"\x89\xD0"                # mov ax,dx
-			b"\xC3"                    # ret
+			b"\xB8\x01\x00\x00\x00",  # mov eax,0x1"
+			b"\x0f\xa2"               # cpuid
+			b"\x89\xD0"               # mov ax,dx
+			b"\xC3"                   # ret
 		)
 		#print('!!! edx: ', hex(edx))
 		rets.append(edx)
 
 		# ECX
 		ecx = self._run_asm(
-			b"\xB8\x01\x00\x00\x00",   # mov eax,0x1"
-			b"\x0f\xa2"                # cpuid
-			b"\x89\xC8"                # mov ax,cx
-			b"\xC3"                    # ret
+			b"\xB8\x01\x00\x00\x00",  # mov eax,0x1"
+			b"\x0f\xa2"               # cpuid
+			b"\x89\xC8"               # mov ax,cx
+			b"\xC3"                   # ret
 		)
 		#print('!!! ecx: ', hex(ecx))
 		rets.append(ecx)
@@ -492,22 +502,22 @@ class CPUID:
 		if max_extension_support >= 7:
 			# EBX
 			ebx = self._run_asm(
-				b"\x31\xC9",            # xor ecx,ecx
-				b"\xB8\x07\x00\x00\x00" # mov eax,7
-				b"\x0f\xa2"         # cpuid
-				b"\x89\xD8"         # mov ax,bx
-				b"\xC3"             # ret
+				b"\x31\xC9",             # xor ecx,ecx
+				b"\xB8\x07\x00\x00\x00"  # mov eax,7
+				b"\x0f\xa2"              # cpuid
+				b"\x89\xD8"              # mov ax,bx
+				b"\xC3"                  # ret
 			)
 			#print('!!! ebx: ', hex(ebx))
 			rets.append(ebx)
 
 			# ECX
 			ecx = self._run_asm(
-				b"\x31\xC9",            # xor ecx,ecx
-				b"\xB8\x07\x00\x00\x00" # mov eax,7
-				b"\x0f\xa2"         # cpuid
-				b"\x89\xC8"         # mov ax,cx
-				b"\xC3"             # ret
+				b"\x31\xC9",             # xor ecx,ecx
+				b"\xB8\x07\x00\x00\x00"  # mov eax,7
+				b"\x0f\xa2"              # cpuid
+				b"\x89\xC8"              # mov ax,cx
+				b"\xC3"                  # ret
 			)
 			#print('!!! ecx: ', hex(ecx))
 			rets.append(ecx)
@@ -516,20 +526,20 @@ class CPUID:
 		if max_extension_support >= 0x80000001:
 			# EBX
 			ebx = self._run_asm(
-				b"\xB8\x01\x00\x00\x80" # mov ax,0x80000001
-				b"\x0f\xa2"         # cpuid
-				b"\x89\xD8"         # mov ax,bx
-				b"\xC3"             # ret
+				b"\xB8\x01\x00\x00\x80"  # mov ax,0x80000001
+				b"\x0f\xa2"              # cpuid
+				b"\x89\xD8"              # mov ax,bx
+				b"\xC3"                  # ret
 			)
 			#print('!!! ebx: ', hex(ebx))
 			rets.append(ebx)
 
 			# ECX
 			ecx = self._run_asm(
-				b"\xB8\x01\x00\x00\x80" # mov ax,0x80000001
-				b"\x0f\xa2"         # cpuid
-				b"\x89\xC8"         # mov ax,cx
-				b"\xC3"             # ret
+				b"\xB8\x01\x00\x00\x80"  # mov ax,0x80000001
+				b"\x0f\xa2"              # cpuid
+				b"\x89\xC8"              # mov ax,cx
+				b"\xC3"                  # ret
 			)
 			#print('!!! ecx: ', hex(ecx))
 			rets.append(ecx)
@@ -544,9 +554,9 @@ class CPUID:
 		# Processor brand string
 		if max_extension_support >= 0x80000004:
 			instructions = [
-				b"\xB8\x02\x00\x00\x80", # mov ax,0x80000002
-				b"\xB8\x03\x00\x00\x80", # mov ax,0x80000003
-				b"\xB8\x04\x00\x00\x80"  # mov ax,0x80000004
+				b"\xB8\x02\x00\x00\x80",  # mov ax,0x80000002
+				b"\xB8\x03\x00\x00\x80",  # mov ax,0x80000003
+				b"\xB8\x04\x00\x00\x80"   # mov ax,0x80000004
 			]
 			for instruction in instructions:
 				# EAX
@@ -607,11 +617,12 @@ class CPUID:
 
 		return ecx
 
+
 def get_cpu_info_from_cpuid():
 	# Just return if not X86
 	arch_string_raw = platform.machine()
 	arch, bits = parse_arch(arch_string_raw)
-	if not arch in ['X86_32', 'X86_64']:
+	if arch not in ['X86_32', 'X86_64']:
 		return {}
 
 	# FIXME: Return none if SE Linux is in enforcing mode

@@ -1,5 +1,3 @@
-
-
 import unittest
 from cpuinfo import *
 import helpers
@@ -20,7 +18,6 @@ class MockDataSource:
 	@staticmethod
 	def has_lscpu():
 		return True
-
 
 	@staticmethod
 	def cat_proc_cpuinfo():
